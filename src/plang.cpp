@@ -17,7 +17,6 @@ int main(int argc, char** argv) {
     }
     
     auto test = tokenizer.tokenizer_loop();
-    std::cout << "Token result: " << std::endl;
 
     auto ast = AST(test);
     AST_Node* res;
@@ -25,10 +24,9 @@ int main(int argc, char** argv) {
     try {
         res = ast.parse();
     } catch(const std::exception& e) {
-        std::cout << e.what() << '\n';
+        std::cerr << e.what() << '\n';
     }
 
-    // res->dump();
     ast.show_tree(res, "test");
 
     return 0;

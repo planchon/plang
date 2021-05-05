@@ -11,12 +11,12 @@
 #include "token.h"
 #include "error.h"
 
-// std::map<char, int> BINARY_OPERATORS = {{'<', 10}, {'+', 20}, {'-', 20}, {'*', 40}};
+int get_operator_priority(char);
 
 class AST_Node {
 public:
     virtual void dump() = 0;
-    virtual void visualize(std::string file, int from, int to) = 0;
+    virtual int visualize(std::string file, int from, int to, std::string pos = "") = 0;
 };
 
 class AST_Number : public AST_Node {
@@ -25,7 +25,7 @@ class AST_Number : public AST_Node {
 public:
     AST_Number(double val) : val(val) {};
     void dump();
-    void visualize(std::string file, int from, int to);
+    int visualize(std::string file, int from, int to, std::string pos = "");
 };
 
 class AST_Variable : public AST_Node {
@@ -34,7 +34,7 @@ class AST_Variable : public AST_Node {
 public:
     AST_Variable(std::string val) : val(val) {};
     void dump();
-    void visualize(std::string file, int from, int to);
+    int visualize(std::string file, int from, int to, std::string pos = "");
 };
 
 class AST_Operator : public AST_Node {
@@ -45,37 +45,38 @@ class AST_Operator : public AST_Node {
 public:
     AST_Operator(AST_Node* left, char op, AST_Node* right): left(left), op(op), right(right) {};
     void dump();
-    void visualize(std::string file, int from, int to);
+    int visualize(std::string file, int from, int to, std::string pos = "");
 };
 
 class AST_Call : public AST_Node {
     std::string name;
-    std::vector<AST_Number> args;
+    std::vector<AST_Node*> args;
 
 public:
-    AST_Call(std::string name, std::vector<AST_Number> args) : name(name), args(args) {};
+    AST_Call(std::string name, std::vector<AST_Node*> args) : name(name), args(args) {};
     void dump();
-    void visualize(std::string file, int from, int to);
+    int visualize(std::string file, int from, int to, std::string pos = "");
 };
 
 class AST_Prototype : public AST_Node {
     std::string name;
-    std::vector<AST_Variable*> args;
+    std::vector<AST_Node*> args;
 
 public:
-    AST_Prototype(std::string name, std::vector<AST_Variable*> args) : name(name), args(args) {};
+    AST_Prototype(std::string name, std::vector<AST_Node*> args) : name(name), args(args) {};
     const std::string get_name() { return name; };
+    const std::vector<AST_Node*> get_args() { return args; };
     void dump();
-    void visualize(std::string file, int from, int to) {};
+    int visualize(std::string file, int from, int to, std::string pos = "") {};
 };
 
 class AST_Function : public AST_Node {
-    AST_Prototype proto;
+    AST_Prototype* proto;
     AST_Node* body;
 public:
-    AST_Function(AST_Prototype proto, AST_Node* body) : proto(proto), body(body) {};
+    AST_Function(AST_Prototype* proto, AST_Node* body) : proto(proto), body(body) {};
     void dump();
-    void visualize(std::string file, int from, int to) {};
+    int visualize(std::string file, int from, int to, std::string pos = "");
 };
 
 class AST {
@@ -88,16 +89,17 @@ private:
 public:
     AST(std::vector<Token> tokens) : tokens(tokens), current_token_index(-1) {};
     bool get_token();
+    bool undo_token();
     void show_tree(AST_Node* tree, std::string filename);
 
     AST_Function* parse_function();
     AST_Prototype* parse_function_proto();
     AST_Node* parse();
-    AST_Call* parse_call();
-    AST_Call* parse_extern();
+    AST_Node* parse_call();
+    AST_Node* parse_extern();
     AST_Node* parse_top_level();
-
-    friend std::ostream& operator << (std::ostream& os, AST& ast);
+    AST_Node* parse_priority_operator(int, AST_Node*);
+    AST_Node* parse_primary();
 };
 
 #endif

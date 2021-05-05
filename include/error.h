@@ -6,9 +6,9 @@
 #include "iostream"
 
 struct ParsingError : public std::exception {
-    std::string message;
+    const char* message;
 public:
-    ParsingError(std::string message) : message(message) {};
+    ParsingError(const char* message);
     virtual const char *what() const noexcept override;
 };
 
