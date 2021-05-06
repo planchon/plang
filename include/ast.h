@@ -11,7 +11,7 @@
 #include "token.h"
 #include "error.h"
 
-int get_operator_priority(char);
+int get_operator_priority(Token);
 
 class AST_Node {
 public:
@@ -100,6 +100,7 @@ public:
     AST_Node* parse_top_level();
     AST_Node* parse_priority_operator(int, AST_Node*);
     AST_Node* parse_primary();
+    AST_Node* parse_parenthesis();
 };
 
 #endif

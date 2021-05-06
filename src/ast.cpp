@@ -215,44 +215,63 @@ AST_Node* AST::parse_extern() {
 // return the correct tree
 // must begin with an operator
 AST_Node* AST::parse_priority_operator(int precedence, AST_Node* left) {
-    get_token();
+    std::cout << "PARSE PRIORITY" << std::endl;
     while(1) {
-        int priority = get_operator_priority(current_token.ope);
+        std::cout << "1. left" << std::endl;
+        left->dump();
+        int priority = get_operator_priority(current_token);
         
-        if (priority < precedence) 
+        if (priority < precedence) {
+            std::cout << "FIN PARSE PRIORITY" << std::endl;
             return left;
+        }
         
+        // get_token();
+        if (current_token.tok != TOK_OPERATOR) {
+            std::cout << "JE SUIS PAS UN OPERATOR" << std::endl;
+            exit(-1);
+        } 
         char op = current_token.ope;
         get_token();
-        // if(!get_token()) {
-        //     return left;
-        // }
 
         AST_Node* right = parse_primary();
-        if (!right) {
-            return nullptr;
-        }
+        std::cout << "2. right" << std::endl;
+        right->dump();
+
         get_token();
         
-        // if(!get_token()) {
-        //     return left;
-        // }
-        
-        int new_priority = get_operator_priority(current_token.ope);
-        if (priority > new_priority) {
+        int new_priority = get_operator_priority(current_token);
+        if (priority < new_priority) {
             right = parse_priority_operator(priority + 1, right);
-            if (!right) {
-                return nullptr;
-            }
+            std::cout << "Recur right" << std::endl;
+            right->dump();
         }
 
         left = new AST_Operator(left, op, right);
+        std::cout << "4. left (merge) " << op << std::endl;
+        left->dump();
     }
 }
-// 1 * 2 + 3
+
+AST_Node* AST::parse_parenthesis() {
+    if (current_token.tok != TOK_OPERATOR || current_token.ope != '(')
+        throw ParsingError("excepting a (");
+    get_token(); // we eat the (
+    AST_Node* value = parse_top_level();
+    std::cout << "parsed " << std::endl;
+    value->dump();
+    // get_token(); // pas sur ATTENTION
+
+    if (current_token.tok != TOK_OPERATOR || current_token.ope != ')')
+        throw ParsingError("excepting a )");
+    
+    return value;
+}
 
 AST_Node* AST::parse_primary() {
     switch (current_token.tok) {
+        case TOK_OPERATOR:
+            return parse_parenthesis();
         case TOK_IDENTIFIER:
             return parse_call();
             break;
@@ -266,6 +285,7 @@ AST_Node* AST::parse_primary() {
 
 AST_Node* AST::parse_top_level() {
     AST_Node* left = parse_primary();
+    get_token();
     return parse_priority_operator(0, left);
 }
 
@@ -299,13 +319,17 @@ void AST::show_tree(AST_Node* tree, std::string filename) {
     file2.close();
 
     std::cout << "compiling the graph..." << std::endl;
-    std::string command = "dot -Tpdf " + filename + " -o " + filename + ".pdf";
+    std::string command = "dot -Tpdf " + filename + " -o graph/" + filename + ".pdf";
     std::system(command.c_str());
-    std::cout << "graph generated at " << filename + ".ps" << std::endl;
+    std::cout << "graph generated at graph/" << filename + ".pdf" << std::endl;
 }
 
-int get_operator_priority(char op) {
-    switch (op) {
+int get_operator_priority(Token tok) {
+    if (tok.tok != TOK_OPERATOR) {
+        return -1;
+    }
+
+    switch (tok.ope) {
         case '<':
             return 10;
         case '+':
@@ -313,7 +337,7 @@ int get_operator_priority(char op) {
         case '-':
             return 20;
         case '*':
-            return 30;
+            return 40;
         default:
             return -1;
     }
