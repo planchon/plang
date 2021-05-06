@@ -8,6 +8,7 @@
 #include "map"
 #include <bits/stdc++.h>
 
+#include "codegen.h"
 #include "token.h"
 #include "error.h"
 
@@ -17,6 +18,7 @@ class AST_Node {
 public:
     virtual void dump() = 0;
     virtual int visualize(std::string file, int from, int to, std::string pos = "") = 0;
+    virtual llvm::Value* code_gen() = 0;
 };
 
 class AST_Number : public AST_Node {
@@ -26,6 +28,7 @@ public:
     AST_Number(double val) : val(val) {};
     void dump();
     int visualize(std::string file, int from, int to, std::string pos = "");
+    llvm::Value* code_gen() {};
 };
 
 class AST_Variable : public AST_Node {
@@ -35,6 +38,7 @@ public:
     AST_Variable(std::string val) : val(val) {};
     void dump();
     int visualize(std::string file, int from, int to, std::string pos = "");
+    llvm::Value* code_gen() {};
 };
 
 class AST_Operator : public AST_Node {
@@ -46,6 +50,7 @@ public:
     AST_Operator(AST_Node* left, char op, AST_Node* right): left(left), op(op), right(right) {};
     void dump();
     int visualize(std::string file, int from, int to, std::string pos = "");
+    llvm::Value* code_gen() {};
 };
 
 class AST_Call : public AST_Node {
@@ -56,6 +61,7 @@ public:
     AST_Call(std::string name, std::vector<AST_Node*> args) : name(name), args(args) {};
     void dump();
     int visualize(std::string file, int from, int to, std::string pos = "");
+    llvm::Value* code_gen() {};
 };
 
 class AST_Prototype : public AST_Node {
@@ -68,6 +74,7 @@ public:
     const std::vector<AST_Node*> get_args() { return args; };
     void dump();
     int visualize(std::string file, int from, int to, std::string pos = "") {};
+    llvm::Value* code_gen() {};
 };
 
 class AST_Function : public AST_Node {
@@ -77,6 +84,7 @@ public:
     AST_Function(AST_Prototype* proto, AST_Node* body) : proto(proto), body(body) {};
     void dump();
     int visualize(std::string file, int from, int to, std::string pos = "");
+    llvm::Value* code_gen() {};
 };
 
 class AST {

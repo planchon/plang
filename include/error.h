@@ -5,11 +5,18 @@
 #include <string>
 #include "iostream"
 
-struct ParsingError : public std::exception {
-    const char* message;
+class plangError {
+    std::string message;
 public:
-    ParsingError(const char* message);
-    virtual const char *what() const noexcept override;
+    plangError() {};
+    virtual void what() = 0;
+};
+
+class ParsingError : plangError {
+    std::string message;
+public:
+    ParsingError(std::string message) : message(message) {};
+    void what() { std::cout << "Parsing Error : " << message << std::endl; }
 };
 
 #endif

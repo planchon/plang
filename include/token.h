@@ -27,14 +27,16 @@ class Token {
 public:
     token tok;
     std::string identifier;
+    std::string raw_data;
+    int pos;
     double value;
     char ope;
 
     Token();
-    Token(token token) : tok(token) {};
-    Token(token token, std::string identifier) : tok(token), identifier(identifier) {};
-    Token(token token, char ope) : tok(token), ope(ope) {};
-    Token(token token, double value) : tok(token), value(value) {};
+    Token(token token, std::string raw_data, int pos) : tok(token), raw_data(raw_data), pos(pos) {};
+    Token(token token, std::string identifier, std::string raw_data, int pos) : tok(token), identifier(identifier), raw_data(raw_data), pos(pos) {};
+    Token(token token, char ope, std::string raw_data, int pos) : tok(token), ope(ope), raw_data(raw_data), pos(pos) {};
+    Token(token token, double value, std::string raw_data, int pos) : tok(token), value(value), raw_data(raw_data), pos(pos) {};
 
     friend std::ostream& operator << (std::ostream& os, Token& tok);
 };

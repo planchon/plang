@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
         std::getline(std::cin, data);
         tokenizer.from_data(data);
     }
-    
+
     auto test = tokenizer.tokenizer_loop();
 
     auto ast = AST(test);
@@ -23,8 +23,9 @@ int main(int argc, char** argv) {
 
     try {
         res = ast.parse();
-    } catch(const std::exception& e) {
-        std::cerr << e.what() << '\n';
+    } catch(ParsingError& e) {
+        e.what();
+        return -1;
     }
 
     ast.show_tree(res, "test");

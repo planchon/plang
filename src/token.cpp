@@ -97,17 +97,17 @@ Token Tokenizer::get_token() {
     // get the next char in the buffer
     // kill the tokenizer if EOF
     if (!this->get_next_char()) {
-        return Token(TOK_EOF);
+        return Token(TOK_EOF, std::string(), this->file_pos);
     }
 
     // first byte of a file start with \0
     if (this->current_char == '\0') {
-        return Token(TOK_EOF);
+        return Token(TOK_EOF, std::string(), this->file_pos);
     }
 
     // in console mode, \r means end of command
     if (this->jit_console && this->current_char == '\r') {
-        return Token(TOK_EOF);
+        return Token(TOK_EOF, std::string(), this->file_pos);
     }
 
     // skip all the spaces
@@ -125,15 +125,16 @@ Token Tokenizer::get_token() {
         } while(this->get_next_char() && isalnum(this->current_char));
         
         if (token_data == "def")
-            return Token(TOK_DEF);
+            return Token(TOK_DEF, token_data, this->file_pos);
 
         if (token_data == "extern")
-            return Token(TOK_EXTERN);
+            return Token(TOK_EXTERN, token_data, this->file_pos);
 
         // if the current_char is not a number the file_pos will be incr twice 
         this->file_pos--;
 
-        return Token(TOK_IDENTIFIER, token_data);
+        Token test = Token(TOK_IDENTIFIER, token_data, token_data, this->file_pos+1);
+        return test;
     }
 
     // get the numbers
@@ -149,12 +150,13 @@ Token Tokenizer::get_token() {
         
         // if the current_char is not a number the file_pos will be incr twice 
         this->file_pos--;
-
-        return Token(TOK_NUMBER, val);
+        std::string number_string = std::to_string(val);
+        return Token(TOK_NUMBER, val, number_string, this->file_pos);
     }
 
     // must be a +-*/()
-    return Token(TOK_OPERATOR, this->current_char);
+    std::string char_string(1, this->current_char);
+    return Token(TOK_OPERATOR, this->current_char, char_string, this->file_pos);
 }   
 
 std::vector<Token> Tokenizer::tokenizer_loop() {

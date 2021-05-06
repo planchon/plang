@@ -105,6 +105,8 @@ bool AST::get_token() {
         current_token.ope = tokens[current_token_index].ope;
         current_token.identifier = tokens[current_token_index].identifier;
         current_token.value = tokens[current_token_index].value;
+        current_token.raw_data = tokens[current_token_index].raw_data;
+        current_token.pos = tokens[current_token_index].pos;
 
         return true;
     } else {
@@ -135,7 +137,7 @@ AST_Prototype* AST::parse_function_proto() {
     get_token(); // eat the "def" keyword
 
     if (current_token.tok != TOK_IDENTIFIER) {
-        throw ParsingError("expecting a function name got " + current_token.tok);
+        throw ParsingError(std::string("was excepting a function name but got ") + current_token.raw_data);
     }
 
     std::string function_name;
@@ -143,15 +145,15 @@ AST_Prototype* AST::parse_function_proto() {
 
     get_token();
 
-    if (current_token.tok != TOK_OPERATOR && current_token.ope != '(') {
-        throw ParsingError("expecting ( got " + current_token.tok);
+    if (current_token.tok != TOK_OPERATOR || current_token.ope != '(') {
+        throw ParsingError(std::string("was excepting a ( but got ") + current_token.raw_data);
     }
 
     std::vector<AST_Node*> args;
 
     while (get_token() && current_token.ope != ')') {
         if (current_token.tok != TOK_IDENTIFIER) {
-            throw ParsingError("excepting variable got " + current_token.tok);
+            throw ParsingError(std::string("was excepting a variable but got ") + current_token.raw_data);
         }
 
         args.push_back(new AST_Variable(current_token.identifier));
@@ -159,7 +161,7 @@ AST_Prototype* AST::parse_function_proto() {
 
     // check if the last token we eat was a )
     if (current_token.ope != ')') {
-        throw ParsingError("excepting ) got " + current_token.tok);
+        throw ParsingError(std::string("was excepting ) got ") + current_token.raw_data);
     }
 
     get_token(); // we eat the )
@@ -196,12 +198,12 @@ AST_Node* AST::parse_call() {
             args.push_back(new AST_Variable(current_token.identifier));
             break;
         default:
-            throw ParsingError("excepting variable or number");
+            throw ParsingError(std::string("was excepting a number or variable but got ") + current_token.raw_data);
         }
     }
 
     if (current_token.ope != ')') {
-        throw ParsingError("excepting a ')' got " + current_token.tok);
+        throw ParsingError(std::string("excepting a ')' got ") + current_token.raw_data);
     }
 
     return new AST_Call(function_name, args);
@@ -215,55 +217,41 @@ AST_Node* AST::parse_extern() {
 // return the correct tree
 // must begin with an operator
 AST_Node* AST::parse_priority_operator(int precedence, AST_Node* left) {
-    std::cout << "PARSE PRIORITY" << std::endl;
     while(1) {
-        std::cout << "1. left" << std::endl;
-        left->dump();
         int priority = get_operator_priority(current_token);
         
         if (priority < precedence) {
-            std::cout << "FIN PARSE PRIORITY" << std::endl;
             return left;
         }
         
-        // get_token();
-        if (current_token.tok != TOK_OPERATOR) {
-            std::cout << "JE SUIS PAS UN OPERATOR" << std::endl;
-            exit(-1);
-        } 
         char op = current_token.ope;
         get_token();
 
         AST_Node* right = parse_primary();
-        std::cout << "2. right" << std::endl;
-        right->dump();
 
         get_token();
         
         int new_priority = get_operator_priority(current_token);
         if (priority < new_priority) {
             right = parse_priority_operator(priority + 1, right);
-            std::cout << "Recur right" << std::endl;
-            right->dump();
         }
 
         left = new AST_Operator(left, op, right);
-        std::cout << "4. left (merge) " << op << std::endl;
-        left->dump();
     }
 }
 
 AST_Node* AST::parse_parenthesis() {
-    if (current_token.tok != TOK_OPERATOR || current_token.ope != '(')
-        throw ParsingError("excepting a (");
-    get_token(); // we eat the (
-    AST_Node* value = parse_top_level();
-    std::cout << "parsed " << std::endl;
-    value->dump();
-    // get_token(); // pas sur ATTENTION
+    if (current_token.tok != TOK_OPERATOR || current_token.ope != '(') {
+        throw ParsingError(std::string("was excepting a ( but got ") + current_token.raw_data);
+    }
 
-    if (current_token.tok != TOK_OPERATOR || current_token.ope != ')')
-        throw ParsingError("excepting a )");
+    get_token(); // we eat the (
+
+    AST_Node* value = parse_top_level();
+
+    if (current_token.tok != TOK_OPERATOR || current_token.ope != ')') {
+        throw ParsingError(std::string("was excepting a ) but got ") + current_token.raw_data);
+    }
     
     return value;
 }
@@ -279,7 +267,7 @@ AST_Node* AST::parse_primary() {
             return new AST_Number(current_token.value);
             break;
         default:
-            throw ParsingError("parse level was excepting something got " + current_token.tok);
+            throw ParsingError(std::string("was not excepting ") + current_token.raw_data);
     }
 }
 
